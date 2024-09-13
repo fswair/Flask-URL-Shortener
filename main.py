@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-cstring = os.getenv("STRING")
+cstring = os.environ.get("STRING")
 
 # MongoDB'ye bağlantı oluşturma
 client = MongoClient(cstring)
