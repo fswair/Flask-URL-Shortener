@@ -1,21 +1,21 @@
 from flask import Flask, redirect, render_template, request
 from main import Shortener
 
-client  = Flask(__name__, template_folder="temps")
+app  = Flask(__name__, template_folder="temps")
 
 
-@client.route("/")
+@app.route("/")
 def home():
     return render_template("front.html")
 
-@client.route("/<urlid>")
+@app.route("/<urlid>")
 def route_url(urlid):
     shortener = Shortener(short_url=urlid).__get__(param=urlid)
     if shortener.is_url:
         return redirect(shortener.link)
     return "Its not a valid URL..Maybe, link expired you want to see.."
 
-@client.route("/redirect", methods = ["post"])
+@app.route("/redirect", methods = ["post"])
 def add_link():
     if request.method == "POST":
         url = request.form.get("url")
@@ -36,7 +36,7 @@ def add_link():
         return redirect(f"{request.root_url}show/{link.short_url}")
     return redirect(request.root_url)
 
-@client.route("/show/<short_url>")
+@app.route("/show/<short_url>")
 def show_url(short_url):
     shortener = Shortener(short_url=short_url, alias=short_url).__get__()
     if shortener.is_active:
