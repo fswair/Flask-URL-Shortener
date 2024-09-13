@@ -43,5 +43,3 @@ def show_url(short_url):
         locate = shortener.short_url or shortener.alias
         return f"Successfully created link for <a href='{shortener.link}'>this</a> web address.\nThis link <a href='{request.root_url}{locate}'>{request.root_url}{locate}</a>, will redirect web page, you specified."
     return "Link expired." 
-
-client.run(host="0.0.0.0", port=80, debug=True)
