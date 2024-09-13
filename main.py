@@ -1,15 +1,21 @@
+from pymongo import MongoClient
 from random import choices, randint
-from sqlite3 import connect
-import re
+import re, os
 import string
 from time import time
+from dotenv import load_dotenv
 
-db = connect("links.db", check_same_thread=0)
-cursor = db.cursor()
+load_dotenv()
+
+cstring = os.getenv("STRING")
+
+# MongoDB'ye bağlantı oluşturma
+client = MongoClient(cstring)
+db = client['poems']
+collection = db['links']
 
 class Shortener(object):
     def __init__(self, id: int = None, link: str = None, short_url: str = None, alias: str = "", is_active: bool = False, has_alias: bool = False):
-        self.__create__()
         self.link = link
         self.alias = alias
         self.short_url = (short_url or (self.create_short_url())) if not alias else alias
@@ -18,6 +24,7 @@ class Shortener(object):
         self.match = re.match("(^http\:\/\/|^https\:\/\/|^www\.)?(www)?\.?(\w+)\.{1}([a-z]+)", str(link)) if not re.search("\:\/\/\W", str(link)) else None
         self.is_url = bool(self.match)
         self.id = self.create_url_id()
+
     def create_url_id(self):
         if self.is_url:
             return (len(self.link) + int(time())) * (len(self.link) % 5)
@@ -29,7 +36,7 @@ class Shortener(object):
         chars = letters + digits
         short_url = "".join(choices(chars, k=7))
         
-        if self.is_short_url_exists(short_url = short_url):
+        if self.is_short_url_exists(short_url=short_url):
             return self.create_short_url()
         else:
             return short_url
@@ -37,33 +44,40 @@ class Shortener(object):
     def is_short_url_exists(self, short_url: str = None):
         short_url = self.short_url if not short_url else short_url
         if short_url:
-            selection = db.execute(f"SELECT * FROM links where short_url = '{short_url}'").fetchall()
-            if len(selection) > 0:
-                return True
-        return False
-    
-    def is_alias_exists(self, _alias: str = None):
-        alias = self.__get__().alias if not _alias else _alias
-        if alias:
-            selection = db.execute(f"SELECT * FROM links where alias = '{alias}'").fetchall()
-            if len(selection) > 0:
+            selection = collection.find_one({"short_url": short_url})
+            if selection:
                 return True
         return False
 
-    
-    def __create__(self):
-        db.execute("CREATE TABLE IF NOT EXISTS links (id int, link text, short_url text, alias text primary key, is_active int, has_alias int)")
-    
+    def is_alias_exists(self, _alias: str = None):
+        alias = self.alias if not _alias else _alias
+        if alias:
+            selection = collection.find_one({"alias": alias})
+            if selection:
+                return True
+        return False
+
     def __add__(self):
-        db.execute(f"INSERT INTO links VALUES ({self.create_url_id()}, '{self.link}', '{self.short_url}', '{self.alias}', {self.is_url}, {self.has_alias})")
-        db.commit()
-    
+        document = {
+            "id": self.create_url_id(),
+            "link": self.link,
+            "short_url": self.short_url,
+            "alias": self.alias,
+            "is_active": int(self.is_url),
+            "has_alias": int(self.has_alias)
+        }
+        collection.insert_one(document)
+
     def __get__(self, param: str = ""):
         param = param if param else (self.short_url if not self.alias else self.alias)
         if self.is_short_url_exists(param):
-            link = db.execute(f"SELECT * FROM links WHERE short_url = '{param}'").fetchone()
-            return Shortener(*link)
+            link = collection.find_one({"short_url": param})
+            if link:
+                link.pop("_id")
+                return Shortener(**link)
         elif self.is_alias_exists(param):
-            link = db.execute(f"SELECT * FROM links WHERE alias = '{param}'").fetchone()
-            return Shortener(*link)
+            link = collection.find_one({"alias": param})
+            if link:
+                link.pop("_id")
+                return Shortener(**link)
         return Shortener()
