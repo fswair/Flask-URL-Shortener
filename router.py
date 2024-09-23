@@ -8,6 +8,7 @@ app  = Flask(__name__, template_folder="temps")
 def home():
     return render_template("front.html")
 
+@app.route("/go/<urlid>")
 @app.route("/<urlid>")
 def route_url(urlid):
     shortener = Shortener(short_url=urlid).__get__(param=urlid)
