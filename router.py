@@ -1,46 +1,39 @@
-from flask import Flask, redirect, render_template, request
-from main import Shortener
+from flask import Blueprint, request, jsonify, redirect
+import random
+import string
+from database import add_url, get_long_url
 
-app  = Flask(__name__, template_folder="temps")
+url_shortener = Blueprint('url_shortener', __name__)
 
+def generate_short_url(length=6):
+    return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
 
-@app.route("/")
-def home():
-    return render_template("front.html")
+@url_shortener.route('/shorten', methods=['POST'])
+def shorten_url():
+    data = request.get_json()
+    long_url = data.get('longUrl')
+    alias = data.get('alias')
 
-@app.route("/go/<urlid>")
-@app.route("/<urlid>")
-def route_url(urlid):
-    shortener = Shortener(short_url=urlid).__get__(param=urlid)
-    if shortener.is_url:
-        return redirect(shortener.link)
-    return "Its not a valid URL..Maybe, link expired you want to see.."
+    if not long_url:
+        return jsonify({'error': 'Long URL is required'}), 400
 
-@app.route("/redirect", methods = ["post"])
-def add_link():
-    if request.method == "POST":
-        url = request.form.get("url")
-        alias = request.form.get("alias")
-        
-        try:is_alias_on = True if request.form.get("is_alias_on") == "on" else False
-        except:is_alias_on = False
+    if alias:
+        if not add_url(alias, long_url):
+            return jsonify({'error': 'Alias already in use'}), 400
 
-        shortener = Shortener(link=url, alias=alias if is_alias_on else "", is_active=1, has_alias=is_alias_on)
-        if shortener.is_alias_exists(_alias = alias):
-            return "Alias exists."
-        short_url = shortener.create_short_url()
-        shortener.short_url = short_url
-        shortener.alias = short_url if not shortener.alias else alias
-        shortener.__add__()
+        short_url = alias
+    else:
+        while True:
+            short_url = generate_short_url()
+            if add_url(short_url, long_url):
+                break
 
-        link = Shortener(short_url=short_url).__get__()
-        return redirect(f"{request.root_url}show/{link.short_url}")
-    return redirect(request.root_url)
+    return jsonify({'shortUrl': f'http://localhost:5000/{short_url}'})
 
-@app.route("/show/<short_url>")
-def show_url(short_url):
-    shortener = Shortener(short_url=short_url, alias=short_url).__get__()
-    if shortener.is_active:
-        locate = shortener.short_url or shortener.alias
-        return f"Successfully created link for <a href='{shortener.link}'>this</a> web address.\nThis link <a href='{request.root_url}{locate}'>{request.root_url}{locate}</a>, will redirect web page, you specified."
-    return "Link expired." 
+@url_shortener.route('/<short_url>', methods=['GET'])
+def redirect_to_long_url(short_url):
+    long_url = get_long_url(short_url)
+    if long_url:
+        return redirect(long_url)
+    
+    return jsonify({'error': 'URL not found'}), 404

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Short.mert.uno - The Ultimate URL Shortener</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            "50": "#f5f3ff",
+                            "100": "#ede9fe",
+                            "200": "#ddd6fe",
+                            "300": "#c4b5fd",
+                            "400": "#a78bfa",
+                            "500": "#8b5cf6",
+                            "600": "#7c3aed",
+                            "700": "#6d28d9",
+                            "800": "#5b21b6",
+                            "900": "#4c1d95",
+                            "950": "#2e1065"
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen bg-gradient-to-br from-purple-100 to-indigo-200 dark:bg-gray-900 flex flex-col items-center justify-center p-4 transition-colors duration-300">
+    <div class="w-full max-w-md">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8">
+            <header class="flex items-center justify-between mb-8">
+                <div class="flex items-center">
+                    <h1 class="text-3xl font-bold ml-2 text-primary-600 dark:text-white">Mert Short</h1>
+                </div>
+                <button id="darkModeToggle" class="p-2 rounded-full bg-gray-200 dark:bg-gray-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-800 dark:text-yellow-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                    </svg>
+                </button>
+            </header>
+            <form id="urlForm" class="space-y-4">
+                <div class="relative">
+                    <input type="url" id="longUrl" placeholder="Paste your long URL here" required class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                </div>
+                <div class="relative">
+                    <input type="text" id="alias" placeholder="Custom alias (optional)" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                </div>
+                <button type="submit" class="w-full px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-colors duration-300">
+                    Shorten URL
+                </button>
+            </form>
+            <div id="error" class="mt-4 p-4 rounded-lg bg-red-100 text-red-600 dark:bg-red-800 dark:text-red-200 hidden"></div>
+            <div id="result" class="mt-8 p-4 rounded-lg bg-primary-100 dark:bg-gray-700 hidden">
+                <p class="text-sm text-gray-600 dark:text-gray-300 mb-2">Your ultra-short URL:</p>
+                <div class="flex items-center justify-between">
+                    <a id="shortUrl" href="#" target="_blank" rel="noopener noreferrer" class="text-primary-600 dark:text-primary-400 hover:underline break-all"></a>
+                    <button id="copyButton" class="ml-2 p-2 bg-white dark:bg-gray-600 rounded-md hover:bg-gray-100 dark:hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500">
+                        Copy
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <footer class="mt-8 text-center text-sm text-gray-600 dark:text-gray-400">
+        © <span id="currentYear"></span> Mert.short.uno • The Ultimate URL Shortener
+    </footer>
+    
+    <script type="module">
+        import { URLShortener } from "{{ url_for('static', filename='URLShortener.js') }}";
+        
+        const urlShortener = new URLShortener('http://localhost:5000');
+    </script>
+</body>
+
+</html>

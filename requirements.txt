@@ -2,3 +2,4 @@ Flask
 python-dotenv
 python-multipart
 pymongo
+Flask-Cors
